@@ -1,5 +1,10 @@
 <?php
 
+namespace Restruct\Silverstripe\QuickAddNew\Tests;
+
+use ReflectionProperty;
+use Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension;
+use RuntimeException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\Forms\DropdownField;

@@ -1,5 +1,10 @@
 <?php
 
+namespace Restruct\Silverstripe\QuickAddNew\Tests;
+
+use ReflectionProperty;
+use Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension;
+use RuntimeException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\Forms\CheckboxSetField;
@@ -48,7 +53,7 @@ class QuickAddNewIsolationTest extends SapphireTest
 
     private function readState($field, string $prop)
     {
-        $ext = $field->getExtensionInstance('QuickAddNewExtension');
+        $ext = $field->getExtensionInstance(QuickAddNewExtension::class);
         $reflection = new ReflectionProperty(QuickAddNewExtension::class, $prop);
         $reflection->setAccessible(true);
 
@@ -61,8 +66,8 @@ class QuickAddNewIsolationTest extends SapphireTest
         $b = $this->fieldFor('B', QuickAddNewTestBeta::class);
 
         $this->assertNotSame(
-            $a->getExtensionInstance('QuickAddNewExtension'),
-            $b->getExtensionInstance('QuickAddNewExtension'),
+            $a->getExtensionInstance(QuickAddNewExtension::class),
+            $b->getExtensionInstance(QuickAddNewExtension::class),
             'Each field must get its own QuickAddNewExtension instance; a shared instance means '
             . 'per-field state leaks between fields.'
         );

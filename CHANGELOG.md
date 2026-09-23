@@ -1,5 +1,32 @@
 # Changelog
 
+## 3.0.0
+
+Silverstripe 6 support. The Silverstripe 4/5 line continues on the `v2` branch.
+
+See [UPGRADING.md](UPGRADING.md).
+
+### Breaking
+
+- **`QuickAddNewExtension` is now namespaced**:
+  `Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension`, autoloaded via PSR-4.
+  Up to 2.x it sat in the global namespace and was found only through Silverstripe's class
+  manifest - the package declared no `autoload` section at all. Projects that name the class in
+  YAML or PHP must update those references; calling `useAddNew()` on a field is unchanged.
+- `useAddNew()`'s `$required` parameter is typed `?RequiredFieldsValidator` instead of
+  `?RequiredFields`, following Silverstripe 6 moving that class to
+  `SilverStripe\Forms\Validation\RequiredFieldsValidator`.
+
+### Changed
+
+- Requires PHP `^8.3` and `silverstripe/framework: ^6`.
+- `src/extensions/` renamed to `src/Extensions/` to match PSR-4.
+- Adds `.gitattributes` with `export-ignore` for development-only paths, verified with
+  `git archive`: a dist install now ships neither `tests/` nor `.github/`. CI and local module
+  work must therefore use a path repository with `symlink: true`.
+- Adds CI: PHP 8.3 and 8.4 against MariaDB 11.4, running the module suite, a consumer-shape
+  temp-database build, and a real application boot (`sake db:build --flush`, `sake config:audit`).
+
 ## 2.1.2
 
 Metadata only. No code changes.

@@ -12,14 +12,19 @@ A decorator for form fields that manage object relationships, to allow adding a 
 Requirements
 --------
 
-SilverStripe 4/5
-
 Versions
 --------
 
-| Release | Branch | Supports |
-| ------- | ------ | -------- |
-| `^2`    | `main` | SilverStripe 4 / 5 |
+| Release | Branch | Silverstripe | PHP |
+| ------- | ------ | ------------ | --- |
+| `^3`    | `main` | 6            | 8.3+ |
+| `^2`    | `v2`   | 4 / 5        | 7.4+ |
+
+`composer.json` on each branch is the source of truth. The `v2` line gets security and bug fixes
+until Silverstripe 5 reaches end of life in April 2027.
+
+Upgrading from 2.x? See [UPGRADING.md](UPGRADING.md) - there is one breaking change, the extension
+class is now namespaced.
 
 Usage
 --------

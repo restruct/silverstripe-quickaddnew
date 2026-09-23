@@ -4,15 +4,15 @@ After: "#corefieldtypes"
 ---
 SilverStripe\Forms\DropdownField:
   extensions:
-    - 'QuickAddNewExtension'
+    - 'Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension'
 SilverStripe\Forms\ListboxField:
   extensions:
-    - 'QuickAddNewExtension'
+    - 'Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension'
 # CheckboxSetField support, pulled from upstream (sheadawson/quickaddnew 2.0.0) in 2.1.0. The README
 # has described this field as supported since well before it was registered here.
 SilverStripe\Forms\CheckboxSetField:
   extensions:
-    - 'QuickAddNewExtension'
+    - 'Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension'
 
 # QuickAddNewExtension stores PER-FIELD state on itself ($addNewClass, $addNewFields,
 # $sourceCallback, $addNewRequiredFields, $isFrontend - all set by useAddNew()).
@@ -33,6 +33,6 @@ SilverStripe\Forms\CheckboxSetField:
 # instances, meaning you can set parameters specific to the owner instance" - which is what this
 # module was written against. The Injector singleton default silently contradicts it.
 SilverStripe\Core\Injector\Injector:
-  QuickAddNewExtension:
-    class: 'QuickAddNewExtension'
+  Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension:
+    class: 'Restruct\Silverstripe\QuickAddNew\Extensions\QuickAddNewExtension'
     type: prototype
