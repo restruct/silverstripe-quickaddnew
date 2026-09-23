@@ -61,12 +61,26 @@ class QuickAddNewExtension extends Extension // phpcs:ignore
     );
 
     /**
-     * @var bool
+     * Classes whose add-new fields are currently being built, innermost last.
+     *
+     * This replaces the former process-global boolean:
+     *
+     *        protected static $is_creating = false;
+     *
+     * which had two problems. It was a single flag for the whole request, so a nested useAddNew()
+     * on a DIFFERENT class was silently skipped rather than only the genuine cycle being broken;
+     * and it was cleared by a plain assignment, so any exception thrown while building the fields
+     * left it stuck at true and silently disabled quickaddnew on every later field in the request.
+     *
+     * A stack keyed by class breaks only the real cycle (a Tag whose add-new form contains a Tag
+     * field), and the pop below is in a finally block.
+     *
+     * @var array<string>
      */
-    protected static $is_creating = false;
+    protected static $creating_stack = [];
 
     /**
-     * Tell this form field to apply the add new UI and fucntionality
+     * Tell this form field to apply the add new UI and functionality
      *
      * @param class-string $class - the class name of the object being managed on the relationship
      * @param callable $sourceCallback - the function called to repopulate the field's source array
@@ -96,28 +110,36 @@ class QuickAddNewExtension extends Extension // phpcs:ignore
             return $this->owner;
         }
 
-        if (self::$is_creating) {
+        // Avoid a nested loop if the class displays itself, eg a Tag whose add-new form contains a
+        // Tag field. Only THIS class is blocked, so an add-new form may still offer add-new on a
+        // different class.
+        if (in_array($class, self::$creating_stack, true)) {
             return $this->owner;
         }
-        // Avoid nested loop if you display yourself, eg a Tag creating a Tag
-        self::$is_creating = true;
+        self::$creating_stack[] = $class;
 
-        Requirements::javascript('restruct/silverstripe-quickaddnew:/client/javascript/quickaddnew.js');
-        Requirements::css('restruct/silverstripe-quickaddnew:/client/css/quickaddnew.css');
-        Requirements::add_i18n_javascript('restruct/silverstripe-quickaddnew:/client/javascript/lang');
+        try {
+            Requirements::javascript('restruct/silverstripe-quickaddnew:/client/javascript/quickaddnew.js');
+            Requirements::css('restruct/silverstripe-quickaddnew:/client/css/quickaddnew.css');
+            Requirements::add_i18n_javascript('restruct/silverstripe-quickaddnew:/client/javascript/lang');
 
-        if (!$fields) {
-            if ($sng->hasMethod('getAddNewFields')) {
-                $fields =  $sng->getAddNewFields();
-            } else {
-                $fields = $sng->getCMSFields();
+            if (!$fields) {
+                if ($sng->hasMethod('getAddNewFields')) {
+                    $fields =  $sng->getAddNewFields();
+                } else {
+                    $fields = $sng->getCMSFields();
+                }
             }
-        }
 
-        if (!$required) {
-            if ($sng->hasMethod('getAddNewValidator')) {
-                $required = $sng->getAddNewValidator();
+            if (!$required) {
+                if ($sng->hasMethod('getAddNewValidator')) {
+                    $required = $sng->getAddNewValidator();
+                }
             }
+        } finally {
+            // finally, so a throw while building the fields cannot leave this class stuck on the
+            // stack and silently disable quickaddnew for the rest of the request.
+            array_pop(self::$creating_stack);
         }
 
         $this->owner->addExtraClass('quickaddnew-field');
@@ -128,8 +150,6 @@ class QuickAddNewExtension extends Extension // phpcs:ignore
         $this->addNewClass = $class;
         $this->addNewFields = $fields;
         $this->addNewRequiredFields = $required;
-
-        self::$is_creating = false;
 
         return $this->owner;
     }

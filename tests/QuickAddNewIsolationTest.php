@@ -2,6 +2,7 @@
 
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
+use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\ListboxField;
@@ -98,6 +99,18 @@ class QuickAddNewIsolationTest extends SapphireTest
         $a = $this->fieldFor('A', QuickAddNewTestAlpha::class, DropdownField::class);
         $b = $this->fieldFor('B', QuickAddNewTestBeta::class, ListboxField::class);
 
+        $this->assertSame(QuickAddNewTestAlpha::class, $this->readState($a, 'addNewClass'));
+        $this->assertSame(QuickAddNewTestBeta::class, $this->readState($b, 'addNewClass'));
+    }
+
+    public function testCheckboxSetFieldIsExtendedAndIsolated()
+    {
+        // CheckboxSetField registration was pulled from upstream in 2.1.0; the README had described
+        // it as supported long before this module's _config registered it.
+        $a = $this->fieldFor('A', QuickAddNewTestAlpha::class, CheckboxSetField::class);
+        $b = $this->fieldFor('B', QuickAddNewTestBeta::class, CheckboxSetField::class);
+
+        $this->assertTrue($a->hasAddNewButton(), 'CheckboxSetField must get the quickaddnew extension.');
         $this->assertSame(QuickAddNewTestAlpha::class, $this->readState($a, 'addNewClass'));
         $this->assertSame(QuickAddNewTestBeta::class, $this->readState($b, 'addNewClass'));
     }

@@ -1,6 +1,9 @@
 silverstripe-quickaddnew
 ============================
 
+*Maintained by [Restruct](https://github.com/restruct). If this module saves you time, you can
+[support ongoing maintenance](https://github.com/sponsors/restruct).*
+
 What is it?
 --------
 
@@ -17,11 +20,6 @@ Versions
 | Release | Branch | Supports |
 | ------- | ------ | -------- |
 | `^2`    | `main` | SilverStripe 4 / 5 |
-
-> **Note:** `CheckboxSetField` is described below but is **not** registered by this module's
-> `_config/quickaddnew.yml` yet - only `DropdownField` and `ListboxField` are. Upstream
-> (`sheadawson/quickaddnew` 2.0.0) has the CheckboxSetField support; pulling it in is tracked for
-> the next minor release.
 
 Usage
 --------

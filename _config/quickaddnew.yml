@@ -8,6 +8,11 @@ SilverStripe\Forms\DropdownField:
 SilverStripe\Forms\ListboxField:
   extensions:
     - 'QuickAddNewExtension'
+# CheckboxSetField support, pulled from upstream (sheadawson/quickaddnew 2.0.0) in 2.1.0. The README
+# has described this field as supported since well before it was registered here.
+SilverStripe\Forms\CheckboxSetField:
+  extensions:
+    - 'QuickAddNewExtension'
 
 # QuickAddNewExtension stores PER-FIELD state on itself ($addNewClass, $addNewFields,
 # $sourceCallback, $addNewRequiredFields, $isFrontend - all set by useAddNew()).
