@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.1.1
+
+Fixes a regression introduced in 2.1.0. Upgrade from 2.1.0 is strongly recommended; 2.0.3 and
+earlier are unaffected.
+
+### Fixed
+
+- **2.1.0 broke DB-touching tests in consuming projects.** This module's recursion-guard fixtures
+  shared an `abstract` TestOnly `DataObject` base. `TableBuilder::buildTables()` instantiates every
+  manifest class (`new $dataClass([], DataObject::CREATE_SINGLETON)`, `TableBuilder.php:28`) BEFORE
+  it checks `instanceof TestOnly`, so an abstract DataObject subclass anywhere in the manifest
+  fatals the temp-database build with "Cannot instantiate abstract class". In test mode
+  `ignore_tests` is false, so an installed module's test fixtures are in the manifest.
+
+  Every DB-touching test in the consuming project errored. **Production and `dev/build` were NOT
+  affected** - `ManifestFileFinder` defaults `ignore_tests => true` outside test mode, so vendor
+  `tests/` dirs stay out of the normal manifest. The failure also only appeared on the next flush,
+  not at update time, so a consumer could update, see green, and break later.
+
+  Fixed by dropping the shared abstract base; each fixture now extends `DataObject` directly and
+  repeats `canCreate()`. The duplication is deliberate and commented as such.
+
+  Reported by the FUSE project after updating. Note that this module's own suite could not have
+  caught it: running a module's tests directly loads the fixtures through PHPUnit rather than
+  registering them in the class manifest, so no tables are built and the abstract class is never
+  instantiated. Verified instead by reproducing the consumer shape - a `$usesDatabase = true` test
+  in the harness project, run with `flush=1`, which fails with the abstract base present and passes
+  without it.
+
 ## 2.1.0
 
 Pulls in the upstream (`sheadawson/quickaddnew` 2.0.0) work this fork had diverged from, and hardens

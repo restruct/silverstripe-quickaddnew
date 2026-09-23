@@ -117,22 +117,44 @@ class QuickAddNewRecursionGuardTest extends SapphireTest
     }
 }
 
-abstract class QuickAddNewGuardFixture extends DataObject implements TestOnly
+/**
+ * NB each fixture below extends DataObject DIRECTLY and repeats canCreate().
+ *
+ * These four used to share an `abstract` TestOnly base. That broke every DB-touching test in
+ * CONSUMING projects: `TableBuilder::buildTables()` instantiates each manifest class
+ * (`new $dataClass([], DataObject::CREATE_SINGLETON)`, TableBuilder.php:28) BEFORE it checks
+ * `instanceof TestOnly`, so an abstract DataObject subclass anywhere in the manifest fatals the
+ * temp-database build with "Cannot instantiate abstract class". In test mode `ignore_tests` is
+ * false, so a vendor module's test fixtures ARE in the manifest.
+ *
+ * Do not reintroduce an abstract base here. The duplication is deliberate.
+ */
+class QuickAddNewGuardPlain extends DataObject implements TestOnly
 {
+    private static $table_name = 'QuickAddNewGuardPlain';
+
+    # A real field, so the class actually gets a table: the add-new forms in these tests
+    # are built around a TextField('Title').
+    private static $db = ['Title' => 'Varchar'];
+
     public function canCreate($member = null, $context = [])
     {
         return true;
     }
 }
 
-class QuickAddNewGuardPlain extends QuickAddNewGuardFixture
-{
-    private static $table_name = 'QuickAddNewGuardPlain';
-}
-
-class QuickAddNewGuardSelfRef extends QuickAddNewGuardFixture
+class QuickAddNewGuardSelfRef extends DataObject implements TestOnly
 {
     private static $table_name = 'QuickAddNewGuardSelfRef';
+
+    # A real field, so the class actually gets a table: the add-new forms in these tests
+    # are built around a TextField('Title').
+    private static $db = ['Title' => 'Varchar'];
+
+    public function canCreate($member = null, $context = [])
+    {
+        return true;
+    }
 
     public function getAddNewFields()
     {
@@ -145,9 +167,18 @@ class QuickAddNewGuardSelfRef extends QuickAddNewGuardFixture
     }
 }
 
-class QuickAddNewGuardOuter extends QuickAddNewGuardFixture
+class QuickAddNewGuardOuter extends DataObject implements TestOnly
 {
     private static $table_name = 'QuickAddNewGuardOuter';
+
+    # A real field, so the class actually gets a table: the add-new forms in these tests
+    # are built around a TextField('Title').
+    private static $db = ['Title' => 'Varchar'];
+
+    public function canCreate($member = null, $context = [])
+    {
+        return true;
+    }
 
     public function getAddNewFields()
     {
@@ -160,9 +191,18 @@ class QuickAddNewGuardOuter extends QuickAddNewGuardFixture
     }
 }
 
-class QuickAddNewGuardThrower extends QuickAddNewGuardFixture
+class QuickAddNewGuardThrower extends DataObject implements TestOnly
 {
     private static $table_name = 'QuickAddNewGuardThrower';
+
+    # A real field, so the class actually gets a table: the add-new forms in these tests
+    # are built around a TextField('Title').
+    private static $db = ['Title' => 'Varchar'];
+
+    public function canCreate($member = null, $context = [])
+    {
+        return true;
+    }
 
     public function getAddNewFields()
     {
