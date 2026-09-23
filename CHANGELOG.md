@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.2
+
+Metadata only. No code changes.
+
+- Adds a `funding` property to `composer.json`, so Packagist shows a Fund link.
+- Removes this repository's own `.github/FUNDING.yml`. The Sponsor button now comes from the
+  organisation-wide default in `restruct/.github`, which applies to every repository without its
+  own funding file.
+
 ## 2.1.1
 
 Fixes a regression introduced in 2.1.0. Upgrade from 2.1.0 is strongly recommended; 2.0.3 and
