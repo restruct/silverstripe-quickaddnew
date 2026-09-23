@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.0.1
+
+**Use this instead of 3.0.0.** The 3.0.0 tag is broken and should not be installed.
+
+3.0.0 was tagged on an incomplete commit: `git add -A` refused the case-only rename of
+`src/extensions/` to `src/Extensions/` on a case-insensitive filesystem, so the tag contains the
+new namespaced class at `src/Extensions/QuickAddNewExtension.php` **and** a stale copy of the old
+global-namespace class at `src/extensions/QuickAddNewExtension.php`. On a case-sensitive
+filesystem, which is every Linux host and CI runner, both files exist and the old global-namespace
+`QuickAddNewExtension` is registered alongside the namespaced one. The tag also predates the
+composer retarget, the namespaced YAML config and the renamespaced tests.
+
+3.0.1 is the intended 3.0.0 content. There are no changes between them other than the release
+being complete.
+
 ## 3.0.0
 
 Silverstripe 6 support. The Silverstripe 4/5 line continues on the `v2` branch.
