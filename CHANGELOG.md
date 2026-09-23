@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.0.2
+
+Test coverage only. No behaviour changes.
+
+Adds `tests/QuickAddNewOutputTest.php`, covering what the field RENDERS and what submitting the
+dialog WRITES. The previous 11 tests all asserted PHP object state through reflection, which left
+four of the extension's seven public methods untested - `updateAttributes()`, `AddNewForm()`,
+`AddNewFormHTML()` and `doAddNew()`, the last of which is the method that writes to the database.
+
+The two new shared-state tests were verified against the unfixed code: with the Injector
+declaration removed they both fail, and they were rewritten once because the first versions could
+not fail. The dialog URL is derived from `$this->owner`, which is pushed per call and therefore
+correct even with a shared extension instance, so the assertions had to move onto the form's field
+list and the written record's class instead. Registration order is deliberate in both.
+
 ## 3.0.1
 
 **Use this instead of 3.0.0.** The 3.0.0 tag is broken and should not be installed.
