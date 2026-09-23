@@ -2,88 +2,131 @@ name: CI
 
 on:
   push:
-    branches: [main, v2]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
 jobs:
-  tests:
-    name: PHP ${{ matrix.php }}
+  test:
+    name: SS${{ matrix.silverstripe }} / PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.3', '8.4']
+        include:
+          # This branch is the Silverstripe 6 line only; the 4/5 line lives on v2 with its own
+          # workflow. PHP floor and ceiling of the declared constraint.
+          - silverstripe: '6'
+            php: '8.3'
+            recipe: '^6'
+            testing: '^4'
+          - silverstripe: '6'
+            php: '8.4'
+            recipe: '^6'
+            testing: '^4'
 
     services:
-      mariadb:
+      database:
+        # MariaDB rather than MySQL: it matches both the local dev machines and the Forge
+        # servers, so a version-specific failure here means something real.
         image: mariadb:11.4
         env:
           MARIADB_ROOT_PASSWORD: root
           MARIADB_DATABASE: ss_ci
-        ports: ['3306:3306']
+        ports:
+          - 3306:3306
         options: >-
           --health-cmd="healthcheck.sh --connect --innodb_initialized"
-          --health-interval=10s --health-timeout=5s --health-retries=5
+          --health-interval=10s --health-timeout=5s --health-retries=10
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the module
+        uses: actions/checkout@v4
         with:
           path: module
 
-      - uses: shivammathur/setup-php@v2
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo_mysql, mysqli, gd, intl, zip
+          extensions: mbstring, intl, pdo_mysql, mysqli, gd, zip, dom, xml, tokenizer, simplexml, ctype, hash, session
+          tools: composer:v2
           coverage: none
 
-      # A fresh skeleton with the module installed as a PATH repo with symlink: true. A dist
-      # install would contain no tests at all: /tests is export-ignore in .gitattributes.
-      - name: Build host project
+      - name: Build a host project
+        # The module cannot be tested on its own: it needs a booted Silverstripe app. The host
+        # composer.json is written by hand rather than via `composer create-project`, because
+        # there is no skeleton package to create from - recipe-cms is the thing to require.
+        #
+        # The module is pulled in through a PATH repository pointing at the checkout, symlinked
+        # rather than mirrored: /tests is export-ignore in .gitattributes, so a mirrored
+        # (dist-style) install would contain no tests at all and the suite would silently pass
+        # with nothing in it.
         run: |
-          composer create-project silverstripe/skeleton:^6 host --no-install --no-interaction
-          cd host
-          composer config repositories.module path '{"type":"path","url":"../module","options":{"symlink":true}}' --json 2>/dev/null \
-            || composer config repositories.module '{"type":"path","url":"../module","options":{"symlink":true}}' --json
-          composer require restruct/silverstripe-quickaddnew:"*@dev" --no-interaction
+          mkdir -p app-host
+          cd app-host
+          cat > composer.json <<JSON
+          {
+            "name": "restruct/ci-host",
+            "require": {
+              "silverstripe/recipe-cms": "${{ matrix.recipe }}",
+              "silverstripe/recipe-testing": "${{ matrix.testing }}",
+              "restruct/silverstripe-quickaddnew": "*"
+            },
+            "repositories": [
+              { "type": "path", "url": "../module", "options": { "symlink": true } }
+            ],
+            "autoload-dev": {
+              "psr-4": {
+                "Restruct\\\\Silverstripe\\\\QuickAddNew\\\\Tests\\\\": "vendor/restruct/silverstripe-quickaddnew/tests/"
+              }
+            },
+            "minimum-stability": "dev",
+            "prefer-stable": true,
+            "config": { "allow-plugins": true }
+          }
+          JSON
+          composer update --no-interaction --no-progress
 
-      - name: Run tests
-        working-directory: host
-        env:
-          SS_DATABASE_CLASS: MySQLPDODatabase
-          SS_DATABASE_SERVER: 127.0.0.1
-          SS_DATABASE_PORT: 3306
-          SS_DATABASE_USERNAME: root
-          SS_DATABASE_PASSWORD: root
-          SS_DATABASE_NAME: ss_ci
-          SS_ENVIRONMENT_TYPE: dev
-          SS_PHPUNIT_FLUSH: 1
-        run: vendor/bin/phpunit vendor/restruct/silverstripe-quickaddnew/tests/
-
-      # Guards the class of bug that shipped in 2.1.0: an unbuildable fixture in a module's tests/
-      # dir fatals the temp-database build in every CONSUMING project, and the module's own suite
-      # cannot catch it (its fixtures are loaded by PHPUnit, not registered in the class manifest).
-      - name: Consumer-shape database build
-        working-directory: host
-        env:
-          SS_DATABASE_CLASS: MySQLPDODatabase
-          SS_DATABASE_SERVER: 127.0.0.1
-          SS_DATABASE_PORT: 3306
-          SS_DATABASE_USERNAME: root
-          SS_DATABASE_PASSWORD: root
-          SS_DATABASE_NAME: ss_ci
-          SS_ENVIRONMENT_TYPE: dev
-          SS_PHPUNIT_FLUSH: 1
+      - name: Configure the test suite
         run: |
-          mkdir -p app/tests
-          cat > app/tests/ConsumerDbTest.php <<'PHP'
+          cd app-host
+          cat > phpunit.xml <<'XML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!-- Warning-to-error escalation is the RUNNER's behaviour and differs by PHPUnit
+               major: 9 (SS5) converts warnings by default, 11 (SS6) has no such attribute.
+               failOnWarning is pinned so a warning behaves identically on every leg. -->
+          <phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true"
+                   failOnWarning="true">
+              <testsuites>
+                  <testsuite name="quickaddnew">
+                      <directory>vendor/restruct/silverstripe-quickaddnew/tests</directory>
+                  </testsuite>
+                  <testsuite name="consumer">
+                      <directory>app/tests</directory>
+                  </testsuite>
+              </testsuites>
+          </phpunit>
+          XML
+
+      - name: Add a consumer-shape database test
+        # Guards the class of bug that shipped in 2.1.0: an unbuildable fixture in this module's
+        # tests/ dir fatals the temp-database build in every CONSUMING project, and the module's
+        # own suite structurally cannot catch it (its fixtures are loaded by PHPUnit, not
+        # registered in the class manifest, so no tables are ever built).
+        run: |
+          mkdir -p app-host/app/tests
+          cat > app-host/app/tests/ConsumerDbTest.php <<'PHP'
           <?php
+
           use SilverStripe\Dev\SapphireTest;
           use SilverStripe\Security\Member;
+
           class ConsumerDbTest extends SapphireTest
           {
               protected $usesDatabase = true;
+
               public function testTempDatabaseBuilds()
               {
                   $m = Member::create(['FirstName' => 'x']);
@@ -92,12 +135,28 @@ jobs:
               }
           }
           PHP
-          vendor/bin/phpunit app/tests
 
-      - name: Boot the application
-        working-directory: host
+      - name: Run tests
+        working-directory: app-host
         env:
-          SS_DATABASE_CLASS: MySQLPDODatabase
+          SS_DATABASE_CLASS: MySQLDatabase
+          SS_DATABASE_SERVER: 127.0.0.1
+          SS_DATABASE_PORT: 3306
+          SS_DATABASE_USERNAME: root
+          SS_DATABASE_PASSWORD: root
+          SS_DATABASE_NAME: ss_ci
+          SS_ENVIRONMENT_TYPE: dev
+          # PHPUnit 11 ignores a `flush=1` argument, so the manifest is flushed through this.
+          SS_PHPUNIT_FLUSH: 1
+        run: |
+          vendor/bin/phpunit --testsuite quickaddnew
+          vendor/bin/phpunit --testsuite consumer
+
+      - name: Boot the app and build the database
+        # The suite proves the classes behave; this proves the module does not break a real boot.
+        working-directory: app-host
+        env:
+          SS_DATABASE_CLASS: MySQLDatabase
           SS_DATABASE_SERVER: 127.0.0.1
           SS_DATABASE_PORT: 3306
           SS_DATABASE_USERNAME: root
@@ -107,3 +166,20 @@ jobs:
         run: |
           vendor/bin/sake db:build --flush
           vendor/bin/sake config:audit
+
+  lint:
+    name: Lint PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor and the ceiling of the module's declared php constraint.
+        php: ['8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Syntax check every PHP file
+        run: find src tests -name '*.php' -print0 | xargs -0 -n1 php -l
