@@ -11,6 +11,18 @@ Requirements
 
 SilverStripe 4/5
 
+Versions
+--------
+
+| Release | Branch | Supports |
+| ------- | ------ | -------- |
+| `^2`    | `main` | SilverStripe 4 / 5 |
+
+> **Note:** `CheckboxSetField` is described below but is **not** registered by this module's
+> `_config/quickaddnew.yml` yet - only `DropdownField` and `ListboxField` are. Upstream
+> (`sheadawson/quickaddnew` 2.0.0) has the CheckboxSetField support; pulling it in is tracked for
+> the next minor release.
+
 Usage
 --------
 

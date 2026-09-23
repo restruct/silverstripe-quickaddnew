@@ -26,7 +26,10 @@
     "extra": {
         "expose": [
             "client"
-        ]
+        ],
+        "branch-alias": {
+            "dev-main": "2.x-dev"
+        }
     },
     "replace": {
         "silverstripe/quickaddnew": "*",

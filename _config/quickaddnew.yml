@@ -8,3 +8,26 @@ SilverStripe\Forms\DropdownField:
 SilverStripe\Forms\ListboxField:
   extensions:
     - 'QuickAddNewExtension'
+
+# QuickAddNewExtension stores PER-FIELD state on itself ($addNewClass, $addNewFields,
+# $sourceCallback, $addNewRequiredFields, $isFrontend - all set by useAddNew()).
+#
+# Since SS4, Extensible::getExtensionInstances() resolves each extension through
+# Injector::inst()->get($extension) (framework 5.4/6.2 Extensible.php:536), and Injector treats an
+# UNREGISTERED class as a SINGLETON (Injector.php:1008-1015: no spec -> late-generated spec with no
+# `type` -> Injector::SINGLETON, served from serviceCache). So without the declaration below, every
+# DropdownField and ListboxField in the request shares ONE extension instance and the LAST
+# useAddNew() call overwrites the state of all the earlier ones: every "Add New" dialog opens the
+# last-registered class's form, and doAddNew() would write() that wrong class and set its ID on the
+# field.
+#
+# Declaring the extension a prototype restores one instance per field. getExtensionInstances() still
+# caches per owner object, so this costs one small object per extended field, not one per call.
+#
+# NB the Extension base class docblock states "Every object instance gets its own set of extension
+# instances, meaning you can set parameters specific to the owner instance" - which is what this
+# module was written against. The Injector singleton default silently contradicts it.
+SilverStripe\Core\Injector\Injector:
+  QuickAddNewExtension:
+    class: 'QuickAddNewExtension'
+    type: prototype
