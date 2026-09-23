@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4']
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: ss_ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: module
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo_mysql, mysqli, gd, intl, zip
+          coverage: none
+
+      # A fresh skeleton with the module installed as a PATH repo with symlink: true. A dist
+      # install would contain no tests at all: /tests is export-ignore in .gitattributes.
+      - name: Build host project
+        run: |
+          composer create-project silverstripe/skeleton:^6 host --no-install --no-interaction
+          cd host
+          composer config repositories.module path '{"type":"path","url":"../module","options":{"symlink":true}}' --json 2>/dev/null \
+            || composer config repositories.module '{"type":"path","url":"../module","options":{"symlink":true}}' --json
+          composer require restruct/silverstripe-quickaddnew:"*@dev" --no-interaction
+
+      - name: Run tests
+        working-directory: host
+        env:
+          SS_DATABASE_CLASS: MySQLPDODatabase
+          SS_DATABASE_SERVER: 127.0.0.1
+          SS_DATABASE_PORT: 3306
+          SS_DATABASE_USERNAME: root
+          SS_DATABASE_PASSWORD: root
+          SS_DATABASE_NAME: ss_ci
+          SS_ENVIRONMENT_TYPE: dev
+          SS_PHPUNIT_FLUSH: 1
+        run: vendor/bin/phpunit vendor/restruct/silverstripe-quickaddnew/tests/
+
+      # Guards the class of bug that shipped in 2.1.0: an unbuildable fixture in a module's tests/
+      # dir fatals the temp-database build in every CONSUMING project, and the module's own suite
+      # cannot catch it (its fixtures are loaded by PHPUnit, not registered in the class manifest).
+      - name: Consumer-shape database build
+        working-directory: host
+        env:
+          SS_DATABASE_CLASS: MySQLPDODatabase
+          SS_DATABASE_SERVER: 127.0.0.1
+          SS_DATABASE_PORT: 3306
+          SS_DATABASE_USERNAME: root
+          SS_DATABASE_PASSWORD: root
+          SS_DATABASE_NAME: ss_ci
+          SS_ENVIRONMENT_TYPE: dev
+          SS_PHPUNIT_FLUSH: 1
+        run: |
+          mkdir -p app/tests
+          cat > app/tests/ConsumerDbTest.php <<'PHP'
+          <?php
+          use SilverStripe\Dev\SapphireTest;
+          use SilverStripe\Security\Member;
+          class ConsumerDbTest extends SapphireTest
+          {
+              protected $usesDatabase = true;
+              public function testTempDatabaseBuilds()
+              {
+                  $m = Member::create(['FirstName' => 'x']);
+                  $m->write();
+                  $this->assertGreaterThan(0, $m->ID);
+              }
+          }
+          PHP
+          vendor/bin/phpunit app/tests
+
+      - name: Boot the application
+        working-directory: host
+        env:
+          SS_DATABASE_CLASS: MySQLPDODatabase
+          SS_DATABASE_SERVER: 127.0.0.1
+          SS_DATABASE_PORT: 3306
+          SS_DATABASE_USERNAME: root
+          SS_DATABASE_PASSWORD: root
+          SS_DATABASE_NAME: ss_ci
+          SS_ENVIRONMENT_TYPE: dev
+        run: |
+          vendor/bin/sake db:build --flush
+          vendor/bin/sake config:audit
