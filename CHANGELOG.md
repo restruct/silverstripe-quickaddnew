@@ -22,9 +22,9 @@ Add New UX fixes from issue #1. One new API, so a minor release.
 - The Add New trigger is an admin outline button (`btn btn-outline-secondary font-icon-plus`). It
   was `btn btn-secondary`, which the admin theme renders with a transparent background and border,
   so it read as plain text. The legacy `ss-ui-button ss-ui-button-small` classes are dropped.
-- The dialog close button is the admin icon font's cross, vertically centred inside the titlebar.
-  The admin bundle only styles jQuery UI's legacy close LINK, so the 1.13 close BUTTON showed its
-  "Close" label as text; this module's own fix pulled it outside the dialog (`right: -12px`).
+- The dialog close button (the admin's own cross icon) is positioned and centred inside the
+  titlebar. The admin CSS only positions jQuery UI's legacy close LINK, not the 1.13 close BUTTON,
+  and this module's own fix pulled it outside the dialog (`right: -12px`).
 
 ### Fixed
 
