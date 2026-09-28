@@ -34,6 +34,13 @@ Add New UX fixes from issue #1. One new API, so a minor release. The same change
   added through the jQuery UI `classes` option). The old rules are kept, commented out. This also
   drops the close icon's sprite URL hardcoded to `/_resources/`.
 - `updateAttributes()` no longer fatals on a quickaddnew field that has no form yet.
+- **Clicking Add in the dialog navigated the whole admin page** to the bare field HTML (the record
+  was still written). The submit called `$(form).ajaxSubmit()`, from jquery.form, which the admin's
+  vendor bundle applies to its internal jQuery rather than the global `window.jQuery` entwine uses,
+  so it was undefined and the form fell through to a native submit. It now posts with `$.ajax` and
+  `FormData` (including the clicked `action_doAddNew` button and the `existing` values), calls
+  `preventDefault()` before anything that can throw, and shows the server's response in the dialog
+  on an HTTP error. This predates 3.1.0.
 
 ## 3.0.2
 
