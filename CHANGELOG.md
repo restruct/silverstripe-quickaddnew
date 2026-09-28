@@ -1,5 +1,40 @@
 # Changelog
 
+## 3.1.0 (unreleased)
+
+Add New UX fixes from issue #1. One new API, so a minor release. The same changes are on the
+`v2` line (Silverstripe 4/5) as 2.2.0.
+
+### Added
+
+- **The Add New dialog now has a title**, "Add new {singular name}" by default (i18n key
+  `QUICKADDNEW.AddNewTitle`, using the class's `i18n_singular_name()`). `quickaddnew.js` always
+  read `data-dialog-title`, but nothing on the PHP side ever set it, so the title bar was empty.
+- **`setAddNewDialogTitle(?string $title)`** overrides that title per field, and
+  `getAddNewDialogTitle()` returns the effective one. Chainable, and usable before or after
+  `useAddNew()`: `$field->useAddNew(Tag::class, $source)->setAddNewDialogTitle('Add a work area')`.
+  Needed when two fields create the same class under different relations, where the default titles
+  are identical. The override is stored on the field (as its `data-dialog-title` attribute), not on
+  the extension instance, so it stays per-field even without the `type: prototype` declaration.
+- `lang/nl.yml` and `client/javascript/lang/nl.js`.
+
+### Changed
+
+- The Add New trigger is an admin outline button (`btn btn-outline-secondary font-icon-plus`). It
+  was `btn btn-secondary`, which the admin theme renders with a transparent background and border,
+  so it read as plain text. The legacy `ss-ui-button ss-ui-button-small` classes are dropped.
+- The dialog close button is the admin icon font's cross, vertically centred inside the titlebar.
+  The admin bundle only styles jQuery UI's legacy close LINK, so the 1.13 close BUTTON showed its
+  "Close" label as text; this module's own fix pulled it outside the dialog (`right: -12px`).
+
+### Fixed
+
+- `quickaddnew.css` no longer restyles every jQuery UI dialog on the page. Its close-button rules
+  were unscoped; they are now scoped to quickaddnew's dialog (`.cms .quickaddnew-ui-dialog`, a class
+  added through the jQuery UI `classes` option). The old rules are kept, commented out. This also
+  drops the close icon's sprite URL hardcoded to `/_resources/`.
+- `updateAttributes()` no longer fatals on a quickaddnew field that has no form yet.
+
 ## 3.0.2
 
 Test coverage only. No behaviour changes.

@@ -166,6 +166,61 @@ class QuickAddNewExtension extends Extension
     }
 
     /**
+     * Override the title of the Add New dialog for this field.
+     *
+     * Without this the dialog is titled "Add new {singular name}" (i18n key
+     * QUICKADDNEW.AddNewTitle), which cannot tell apart two fields that create the SAME class
+     * under different relations - hence the override.
+     *
+     * The title is stored on the FIELD, as its data-dialog-title attribute, and deliberately not on
+     * this extension: extension instances are resolved through the Injector, which serves an
+     * unregistered class as a singleton (see _config/quickaddnew.yml), so a property on $this is
+     * per-field only for as long as that prototype declaration holds. An attribute on the owner is
+     * per-field by construction. Chainable, and may be called before or after useAddNew().
+     *
+     * @param string|null $title the dialog title; null (or '') restores the default
+     * @return \SilverStripe\Forms\FormField $this->owner
+     */
+    public function setAddNewDialogTitle(?string $title)
+    {
+        # setAttribute() with null leaves the key present but empty; updateAttributes() treats an
+        # empty value as "not overridden", so null/'' fall back to the default title.
+        $this->owner->setAttribute('data-dialog-title', $title);
+
+        return $this->owner;
+    }
+
+    /**
+     * The title the Add New dialog will get: the override from setAddNewDialogTitle() if one was
+     * set, otherwise the translated "Add new {singular name}" default.
+     *
+     * @return string|null null if quickaddnew is not enabled on this field and no override is set
+     */
+    public function getAddNewDialogTitle()
+    {
+        # Read back through getAttributes(), so this returns exactly what the field renders.
+        $title = $this->owner->getAttributes()['data-dialog-title'] ?? null;
+
+        return ($title === null || $title === '') ? null : $title;
+    }
+
+    /**
+     * Default dialog title: "Add new {singular name}" for the class this field creates.
+     *
+     * @return string
+     */
+    protected function getDefaultAddNewDialogTitle()
+    {
+        return _t(
+            'QUICKADDNEW.AddNewTitle',
+            'Add new {type}',
+            # i18n_singular_name() rather than singular_name(), so a project that translates its
+            # class names gets the translated name inside the translated title.
+            ['type' => singleton($this->addNewClass)->i18n_singular_name()]
+        );
+    }
+
+    /**
      *
      */
     public function updateAttributes(&$attributes)
@@ -174,7 +229,21 @@ class QuickAddNewExtension extends Extension
             // Ignore if not using QuickAddNew
             return;
         }
+
+        # Dialog title, read by quickaddnew.js as data("dialog-title"). Set before the form checks
+        # below so it does not depend on the field having a form. An override from
+        # setAddNewDialogTitle() is already in $attributes (FormField merges its own attributes in
+        # before calling this hook), so the default only fills an empty slot.
+        if (empty($attributes['data-dialog-title'])) {
+            $attributes['data-dialog-title'] = $this->getDefaultAddNewDialogTitle();
+        }
+
         $form = $this->owner->getForm();
+        if (!$form) {
+            # No form yet, so no Link() to build the dialog URL from. This used to be a fatal
+            # "call to a member function getController() on null".
+            return;
+        }
         if ($this->owner === $form->getController()) {
             // Ignore action to avoid cyclic calls with Link() function
             return;

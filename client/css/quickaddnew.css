@@ -15,9 +15,12 @@
     /* 512px - 75px */
 }
 
+/* The trigger is an admin outline button (btn btn-outline-secondary font-icon-plus, set in
+   quickaddnew.js). A full-size .btn is as tall as the admin's form controls, so the old 4px
+   nudge would now push it below the dropdown's baseline. */
 .cms .quickaddnew-button {
     position: relative;
-    top: 4px;
+    /* top: 4px; */
     z-index: 0;
     display: inline-block;
     margin-left: 5px;
@@ -30,26 +33,105 @@
 }
 
 /* Fixes jquery ui styles that are broken in ss 5 */
-.ui-dialog .ui-dialog-titlebar-close {
+/* Disabled in 3.1.0 (2.2.0 on v2), superseded by the .quickaddnew-ui-dialog rules below. These
+   were unscoped, so they restyled EVERY jQuery UI dialog on a page that loaded this file, and
+   right: -12px put the close button outside the dialog's top-right corner. The sprite URL was
+   also hardcoded to /_resources/, which breaks under a custom resources_dir. */
+/* .ui-dialog .ui-dialog-titlebar-close { */
+/*     width: 30px; */
+/*     height: 30px; */
+/*     background: none; */
+/*     z-index: 9999; */
+/*     right: -12px; */
+/* } */
+
+/* .ui-dialog .ui-dialog-titlebar-close:hover { */
+/*     border: 0; */
+/*     opacity: 0.8; */
+/* } */
+
+/* .ui-widget-header .ui-icon-closethick { */
+/*     top: 8px; */
+/*     left: 8px; */
+/* } */
+
+/* .ui-widget-header .ui-button-icon.ui-icon-closethick { */
+/*     background-image: url('/_resources/vendor/silverstripe/admin/client/dist/images/sprite-sprites-32x32.png'); */
+/* } */
+
+/* Dialog titlebar and close button, scoped to quickaddnew's own dialog (the quickaddnew-ui-dialog
+   class is added through the jQuery UI `classes` option in quickaddnew.js) and to the CMS, since
+   the admin bundle's legacy jQuery UI styles are what these correct.
+   The admin bundle only styles the legacy close LINK (.ui-widget-header a.ui-dialog-titlebar-close)
+   and has no .ui-button-icon-only rule, so jQuery UI 1.13's close BUTTON rendered its "Close"
+   label as text, unpositioned. It also makes .ui-dialog-title position: absolute, which leaves the
+   titlebar only as tall as whatever else is in it. */
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    /* room on the right for the close button */
+    padding: 0 44px 0 0;
+}
+
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar .ui-dialog-title {
+    /* back into the flow, so the title gives the bar its height */
+    position: static;
+    float: none;
+    width: auto;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 1.077rem;
+    font-weight: 600;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    z-index: 1;
     width: 30px;
     height: 30px;
-    background: none;
-    z-index: 9999;
-    right: -12px;
-}
-
-.ui-dialog .ui-dialog-titlebar-close:hover {
+    margin: 0;
+    padding: 0;
+    transform: translateY(-50%);
     border: 0;
-    opacity: 0.8;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+    color: #43536d;
+    cursor: pointer;
+    opacity: 0.7;
+    /* hides the "Close" label text jQuery UI keeps inside the button */
+    font-size: 0;
+    line-height: 30px;
+    text-align: center;
 }
 
-.ui-widget-header .ui-icon-closethick {
-    top: 8px;
-    left: 8px;
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close:hover,
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close:focus {
+    border: 0;
+    background: rgba(0, 0, 0, 0.06);
+    opacity: 1;
 }
 
-.ui-widget-header .ui-button-icon.ui-icon-closethick {
-    background-image: url('/_resources/vendor/silverstripe/admin/client/dist/images/sprite-sprites-32x32.png');
+/* The cross itself: the admin icon font's font-icon-cancel glyph (class added in quickaddnew.js;
+   the admin's [class*=" font-icon-"]:before rule supplies the font-family). */
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close:before {
+    display: inline-block;
+    font-size: 16px;
+    line-height: 30px;
+    vertical-align: top;
+}
+
+/* The jQuery UI sprite icon and its spacer, replaced by the glyph above. */
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close .ui-icon,
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close .ui-button-icon-space {
+    display: none;
 }
 
 .ui-dialog-titlebar-close .ui-icon {
