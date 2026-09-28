@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.1.0 (unreleased)
+## 3.1.0 (2026-09-28)
 
 Add New UX fixes from issue #1. One new API, so a minor release. The same changes are on the
 `v2` line (Silverstripe 4/5) as 2.2.0.
