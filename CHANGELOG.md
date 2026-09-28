@@ -1,5 +1,47 @@
 # Changelog
 
+## 3.1.0 (2026-09-28)
+
+Add New UX fixes from issue #1. One new API, so a minor release. The same changes are on the
+`v2` line (Silverstripe 4/5) as 2.2.0.
+
+### Added
+
+- **The Add New dialog now has a title**, "Add new {singular name}" by default (i18n key
+  `QUICKADDNEW.AddNewTitle`, using the class's `i18n_singular_name()`). `quickaddnew.js` always
+  read `data-dialog-title`, but nothing on the PHP side ever set it, so the title bar was empty.
+- **`setAddNewDialogTitle(?string $title)`** overrides that title per field, and
+  `getAddNewDialogTitle()` returns the effective one. Chainable, and usable before or after
+  `useAddNew()`: `$field->useAddNew(Tag::class, $source)->setAddNewDialogTitle('Add a work area')`.
+  Needed when two fields create the same class under different relations, where the default titles
+  are identical. The override is stored on the field (as its `data-dialog-title` attribute), not on
+  the extension instance, so it stays per-field even without the `type: prototype` declaration.
+- `lang/nl.yml` and `client/javascript/lang/nl.js`.
+
+### Changed
+
+- The Add New trigger is an admin outline button (`btn btn-outline-secondary font-icon-plus`). It
+  was `btn btn-secondary`, which the admin theme renders with a transparent background and border,
+  so it read as plain text. The legacy `ss-ui-button ss-ui-button-small` classes are dropped.
+- The dialog close button (the admin's own cross icon) is positioned and centred inside the
+  titlebar. The admin CSS only positions jQuery UI's legacy close LINK, not the 1.13 close BUTTON,
+  and this module's own fix pulled it outside the dialog (`right: -12px`).
+
+### Fixed
+
+- `quickaddnew.css` no longer restyles every jQuery UI dialog on the page. Its close-button rules
+  were unscoped; they are now scoped to quickaddnew's dialog (`.cms .quickaddnew-ui-dialog`, a class
+  added through the jQuery UI `classes` option). The old rules are kept, commented out. This also
+  drops the close icon's sprite URL hardcoded to `/_resources/`.
+- `updateAttributes()` no longer fatals on a quickaddnew field that has no form yet.
+- **Clicking Add in the dialog navigated the whole admin page** to the bare field HTML (the record
+  was still written). The submit called `$(form).ajaxSubmit()`, from jquery.form, which the admin's
+  vendor bundle applies to its internal jQuery rather than the global `window.jQuery` entwine uses,
+  so it was undefined and the form fell through to a native submit. It now posts with `$.ajax` and
+  `FormData` (including the clicked `action_doAddNew` button and the `existing` values), calls
+  `preventDefault()` before anything that can throw, and shows the server's response in the dialog
+  on an HTTP error. This predates 3.1.0.
+
 ## 3.0.2
 
 Test coverage only. No behaviour changes.

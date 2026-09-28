@@ -15,9 +15,12 @@
     /* 512px - 75px */
 }
 
+/* The trigger is an admin outline button (btn btn-outline-secondary font-icon-plus, set in
+   quickaddnew.js). A full-size .btn is as tall as the admin's form controls, so the old 4px
+   nudge would now push it below the dropdown's baseline. */
 .cms .quickaddnew-button {
     position: relative;
-    top: 4px;
+    /* top: 4px; */
     z-index: 0;
     display: inline-block;
     margin-left: 5px;
@@ -30,26 +33,143 @@
 }
 
 /* Fixes jquery ui styles that are broken in ss 5 */
-.ui-dialog .ui-dialog-titlebar-close {
+/* Disabled in 3.1.0 (2.2.0 on v2), superseded by the .quickaddnew-ui-dialog rules below. These
+   were unscoped, so they restyled EVERY jQuery UI dialog on a page that loaded this file, and
+   right: -12px put the close button outside the dialog's top-right corner. The sprite URL was
+   also hardcoded to /_resources/, which breaks under a custom resources_dir. */
+/* .ui-dialog .ui-dialog-titlebar-close { */
+/*     width: 30px; */
+/*     height: 30px; */
+/*     background: none; */
+/*     z-index: 9999; */
+/*     right: -12px; */
+/* } */
+
+/* .ui-dialog .ui-dialog-titlebar-close:hover { */
+/*     border: 0; */
+/*     opacity: 0.8; */
+/* } */
+
+/* .ui-widget-header .ui-icon-closethick { */
+/*     top: 8px; */
+/*     left: 8px; */
+/* } */
+
+/* .ui-widget-header .ui-button-icon.ui-icon-closethick { */
+/*     background-image: url('/_resources/vendor/silverstripe/admin/client/dist/images/sprite-sprites-32x32.png'); */
+/* } */
+
+/* Dialog titlebar and close button, scoped to quickaddnew's own dialog (the quickaddnew-ui-dialog
+   class is added through the jQuery UI `classes` option in quickaddnew.js) and to the CMS, since
+   the admin bundle's legacy jQuery UI styles are what these correct.
+   The admin bundle patches jQuery UI's dialog so the close button's label is
+   <span class="font-icon-cancel btn__icon ..."> (the admin cross) plus screen-reader-only text
+   (SS5: btn--icon-md + sr-only; SS6: plain btn__icon + visually-hidden, and SS6 also adds
+   "close btn btn-close btn--no-text btn--icon-xl modal__close-button" to the button). The admin
+   CSS only positions the legacy close LINK (.ui-widget-header a.ui-dialog-titlebar-close), so the
+   button was left unpositioned. It also makes .ui-dialog-title position: absolute, which leaves
+   the titlebar only as tall as whatever else is in it. */
+/* .ui-widget-header is repeated in the next two selectors to reach 0,4,0 / 0,5,0, above the admin's
+   own .ui-dialog .ui-dialog-titlebar.ui-widget-header (0,3,0) and its .ui-dialog-title child
+   (0,4,0), which would otherwise tie and win or lose on stylesheet order. */
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar.ui-widget-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    /* room on the right for the close button */
+    padding: 0 44px 0 0;
+}
+
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar.ui-widget-header .ui-dialog-title {
+    /* back into the flow, so the title gives the bar its height */
+    position: static;
+    float: none;
+    width: auto;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 1.077rem;
+    font-weight: 600;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The extra .ui-dialog-titlebar raises specificity to 0,4,0, above SS6's
+   .ui-widget-header .ui-dialog-titlebar-close.modal__close-button (0,3,0), so this does not
+   depend on stylesheet order. */
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    z-index: 1;
     width: 30px;
     height: 30px;
-    background: none;
-    z-index: 9999;
-    right: -12px;
-}
-
-.ui-dialog .ui-dialog-titlebar-close:hover {
+    margin: 0;
+    padding: 0;
+    transform: translateY(-50%);
     border: 0;
-    opacity: 0.8;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+    color: #43536d;
+    cursor: pointer;
+    opacity: 0.7;
+    /* hides any bare label text (the admin's own label text is already screen-reader-only); the
+       icon span below sets its own size */
+    font-size: 0;
+    line-height: 30px;
+    text-align: center;
 }
 
-.ui-widget-header .ui-icon-closethick {
-    top: 8px;
-    left: 8px;
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close:hover,
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close:focus {
+    border: 0;
+    background: rgba(0, 0, 0, 0.06);
+    opacity: 1;
 }
 
-.ui-widget-header .ui-button-icon.ui-icon-closethick {
-    background-image: url('/_resources/vendor/silverstripe/admin/client/dist/images/sprite-sprites-32x32.png');
+/* Disabled: this styled a SECOND cross, drawn by font-icon-cancel added to the button itself via
+   the jQuery UI `classes` option. The admin already draws one with the inner .btn__icon span, so
+   the dialog showed two X's, the span's pushed ~22px down below the titlebar (browser check on
+   SS5). The class is no longer added; the span is styled below instead. */
+/* .cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close:before { */
+/*     display: inline-block; */
+/*     font-size: 16px; */
+/*     line-height: 30px; */
+/*     vertical-align: top; */
+/* } */
+
+/* The cross itself: the admin's own <span class="font-icon-cancel btn__icon">, filling the 30x30
+   button so its glyph is centred. position/top reset SS6's "position: relative; top: -0.2em"
+   nudge, which is tuned for its modal header, not this box. */
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close .btn__icon {
+    position: static;
+    top: auto;
+    display: block;
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close .btn__icon:before {
+    display: inline-block;
+    margin: 0;
+    /* overrides btn--icon-md (17px, SS5) / btn--icon-xl (22px, SS6) so both look the same */
+    font-size: 16px;
+    line-height: 30px;
+    vertical-align: top;
+}
+
+/* The stock jQuery UI sprite icon and its spacer, in case a build without the admin's label patch
+   renders them; the admin's own markup has neither. */
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close .ui-icon,
+.cms .quickaddnew-ui-dialog .ui-dialog-titlebar-close .ui-button-icon-space {
+    display: none;
 }
 
 .ui-dialog-titlebar-close .ui-icon {

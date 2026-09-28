@@ -30,7 +30,12 @@ jQuery.entwine("quickaddnew", function ($) {
                 .attr("type", "button")
                 .attr("href", "#")
                 .text(ss.i18n._t("QUICKADDNEW.AddNew"))
-                .addClass("quickaddnew-button ss-ui-button ss-ui-button-small btn btn-secondary")
+                // .addClass("quickaddnew-button ss-ui-button ss-ui-button-small btn btn-secondary")
+                // btn-outline-secondary, not btn-secondary: the admin theme overrides btn-secondary
+                // to a transparent background AND border, so the trigger read as plain text next to
+                // the dropdown. The outline variant keeps a visible border. font-icon-plus adds the
+                // admin icon font's "+" (inert on the frontend, where that font is not loaded).
+                .addClass("quickaddnew-button btn btn-outline-secondary font-icon-plus")
                 .appendTo(parentDiv);
 
             // create dialog
@@ -67,11 +72,34 @@ jQuery.entwine("quickaddnew", function ($) {
                     modal: true,
                     resizable: false,
                     title: this.data("dialog-title"),
+                    // Scope hook for client/css/quickaddnew.css, so its titlebar/close-button fixes
+                    // apply to THIS dialog only and not to every jQuery UI dialog on the page.
+                    // (`classes` is the jQuery UI 1.12+ replacement for the deprecated dialogClass;
+                    // the admin bundle ships 1.13.) Options are merged per KEY, so a key set here
+                    // replaces that key's default: "ui-corner-all" is repeated from jQuery UI's own
+                    // dialog defaults.
+                    //
+                    // No "ui-dialog-titlebar-close" key, deliberately. The admin already renders the
+                    // close button's cross as an inner <span class="font-icon-cancel btn__icon">, so
+                    // adding font-icon-cancel to the button drew a SECOND X. And SS6's admin sets
+                    // its own default for that key ("close btn btn-close btn--no-text btn--icon-xl
+                    // modal__close-button"), which a value here would silently replace.
+                    classes: {
+                        "ui-dialog": "ui-corner-all quickaddnew-ui-dialog",
+                        // "ui-dialog-titlebar-close": "font-icon-cancel",
+                    },
                     position: { my: "center", at: "center", of: window },
                 });
 
             // handle dialog form submission
-            this.getDialog().on("submit", "form", function () {
+            this.getDialog().on("submit", "form", function (e) {
+                // Stop the native submit FIRST. The handler used to end in `return false`, so any
+                // throw before that line (such as the ajaxSubmit call below) let the browser post
+                // the form natively and navigate to the bare AddNewForm response - the field HTML
+                // on its own, with the record already written.
+                e.preventDefault();
+
+                var form = this;
                 var dlg = self.getDialog().dialog();
                 var options = {};
 
@@ -121,7 +149,52 @@ jQuery.entwine("quickaddnew", function ($) {
                     $submitButtons.removeClass("loading ui-state-disabled");
                 };
 
-                $(this).ajaxSubmit(options);
+                // $(this).ajaxSubmit(options);
+                // ajaxSubmit() is jquery.form, which is NOT on window.jQuery in the admin: the admin
+                // vendor.js bundles jquery.form but applies it to its internal webpack jQuery, not
+                // the global one entwine hands us, so $.fn.ajaxSubmit is undefined there and the
+                // call threw (browser check, SS5). Post with plain $.ajax + FormData instead, so
+                // nothing depends on jquery.form. FormData also carries file inputs, as
+                // ajaxSubmit did.
+                var formData = new FormData(form);
+
+                // FormData(form) leaves out submit buttons, so add the one that was used (for
+                // this form: <button name="action_doAddNew">). FormRequestHandler reads the
+                // action_* key to pick the handler; without it, it falls back to the form's
+                // first action, which is the same one today, but sending it keeps that explicit.
+                var submitter = (e.originalEvent && e.originalEvent.submitter) || $submitButtons.get(0);
+                if (submitter && submitter.name && !formData.has(submitter.name)) {
+                    formData.append(submitter.name, submitter.value || "");
+                }
+
+                // ajaxSubmit merged options.data into the POST; do the same.
+                if (options.data) {
+                    $.each(options.data, function (key, value) {
+                        formData.append(key, value);
+                    });
+                }
+
+                $.ajax({
+                    url: $(form).attr("action"),
+                    type: ($(form).attr("method") || "POST").toUpperCase(),
+                    data: formData,
+                    // Leave FormData alone: no query-string encoding, and let the browser set the
+                    // multipart Content-Type with its boundary.
+                    processData: false,
+                    contentType: false,
+                    // HTML, not JSON: FormRequestHandler answers an ajax validation failure with the
+                    // re-rendered form as HTML (200) unless the Accept header asks for JSON, and
+                    // options.success shows that HTML in the dialog.
+                    dataType: "html",
+                    success: options.success,
+                    error: function (xhr) {
+                        // ajaxSubmit had no error handler, so a failed request (permission failure,
+                        // server error) did nothing visible. Show the server's response in the
+                        // dialog rather than leaving the user waiting.
+                        self.getDialog().html(xhr.responseText || (xhr.status + " " + xhr.statusText));
+                    },
+                    complete: options.complete,
+                });
 
                 return false;
             });

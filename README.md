@@ -51,6 +51,15 @@ Next, we can tell the field to use and configure quickaddnew. The first paramete
 $field->useAddNew('MyObject', $source);
 ```
 
+The dialog is titled "Add new {singular name}" (i18n key `QUICKADDNEW.AddNewTitle`). To override
+it for one field, for instance when two fields create the same class under different relations:
+
+```php
+$field->useAddNew('MyObject', $source)->setAddNewDialogTitle('Add a work area');
+```
+
+Passing `null` restores the default. `getAddNewDialogTitle()` returns the title the dialog will get.
+
 Add the field to your FieldList
 
 ```php
