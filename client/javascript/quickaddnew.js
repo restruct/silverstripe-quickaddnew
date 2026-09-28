@@ -74,14 +74,19 @@ jQuery.entwine("quickaddnew", function ($) {
                     title: this.data("dialog-title"),
                     // Scope hook for client/css/quickaddnew.css, so its titlebar/close-button fixes
                     // apply to THIS dialog only and not to every jQuery UI dialog on the page.
-                    // The close button gets the admin icon font's cross instead of the jQuery UI
-                    // sprite, which the admin bundle only styles for the legacy <a> close link.
                     // (`classes` is the jQuery UI 1.12+ replacement for the deprecated dialogClass;
-                    // the admin bundle ships 1.13.) A key set here REPLACES that key's default, so
-                    // "ui-corner-all" is repeated from jQuery UI's own dialog defaults.
+                    // the admin bundle ships 1.13.) Options are merged per KEY, so a key set here
+                    // replaces that key's default: "ui-corner-all" is repeated from jQuery UI's own
+                    // dialog defaults.
+                    //
+                    // No "ui-dialog-titlebar-close" key, deliberately. The admin already renders the
+                    // close button's cross as an inner <span class="font-icon-cancel btn__icon">, so
+                    // adding font-icon-cancel to the button drew a SECOND X. And SS6's admin sets
+                    // its own default for that key ("close btn btn-close btn--no-text btn--icon-xl
+                    // modal__close-button"), which a value here would silently replace.
                     classes: {
                         "ui-dialog": "ui-corner-all quickaddnew-ui-dialog",
-                        "ui-dialog-titlebar-close": "font-icon-cancel",
+                        // "ui-dialog-titlebar-close": "font-icon-cancel",
                     },
                     position: { my: "center", at: "center", of: window },
                 });
