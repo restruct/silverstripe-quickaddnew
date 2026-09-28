@@ -1,3 +1,4 @@
 en:
   QUICKADDNEW:
     Add: 'Add'
+    AddNewTitle: 'Add new {type}'

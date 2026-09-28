@@ -30,7 +30,12 @@ jQuery.entwine("quickaddnew", function ($) {
                 .attr("type", "button")
                 .attr("href", "#")
                 .text(ss.i18n._t("QUICKADDNEW.AddNew"))
-                .addClass("quickaddnew-button ss-ui-button ss-ui-button-small btn btn-secondary")
+                // .addClass("quickaddnew-button ss-ui-button ss-ui-button-small btn btn-secondary")
+                // btn-outline-secondary, not btn-secondary: the admin theme overrides btn-secondary
+                // to a transparent background AND border, so the trigger read as plain text next to
+                // the dropdown. The outline variant keeps a visible border. font-icon-plus adds the
+                // admin icon font's "+" (inert on the frontend, where that font is not loaded).
+                .addClass("quickaddnew-button btn btn-outline-secondary font-icon-plus")
                 .appendTo(parentDiv);
 
             // create dialog
@@ -67,6 +72,17 @@ jQuery.entwine("quickaddnew", function ($) {
                     modal: true,
                     resizable: false,
                     title: this.data("dialog-title"),
+                    // Scope hook for client/css/quickaddnew.css, so its titlebar/close-button fixes
+                    // apply to THIS dialog only and not to every jQuery UI dialog on the page.
+                    // The close button gets the admin icon font's cross instead of the jQuery UI
+                    // sprite, which the admin bundle only styles for the legacy <a> close link.
+                    // (`classes` is the jQuery UI 1.12+ replacement for the deprecated dialogClass;
+                    // the admin bundle ships 1.13.) A key set here REPLACES that key's default, so
+                    // "ui-corner-all" is repeated from jQuery UI's own dialog defaults.
+                    classes: {
+                        "ui-dialog": "ui-corner-all quickaddnew-ui-dialog",
+                        "ui-dialog-titlebar-close": "font-icon-cancel",
+                    },
                     position: { my: "center", at: "center", of: window },
                 });
 

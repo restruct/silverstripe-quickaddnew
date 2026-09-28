@@ -1,0 +1,6 @@
+nl:
+  QUICKADDNEW:
+    Add: 'Toevoegen'
+    # "{type} toevoegen" rather than "Nieuwe {type} toevoegen": Dutch inflects the adjective by
+    # grammatical gender (nieuwe tag, nieuw document), which a placeholder cannot carry.
+    AddNewTitle: '{type} toevoegen'
