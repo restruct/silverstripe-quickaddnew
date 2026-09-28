@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.2.0 (unreleased)
+## 2.2.0 (2026-09-28)
 
 Add New UX fixes from issue #1. One new API, so a minor release.
 
