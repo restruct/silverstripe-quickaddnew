@@ -36,7 +36,11 @@ export default defineConfig({
     retries: 0,
     // Two workers is enough for a dozen specs; php -S runs 4 PHP workers per host, and parallel
     // specs share one admin session, which PHP's session lock serialises anyway.
-    workers: 2,
+    // Not on SS 6.1+: its FileSessionHandler does not lock the session file, so parallel specs
+    // sharing one login overwrite each other's session writes (GridField state lost, 500s). One
+    // worker, measured flake-free on copybutton.
+    // workers: 2,
+    workers: 1,
     timeout: 30_000,
     expect: { timeout: 7_500 },
     // On GitHub Actions (CI=true) the 'github' reporter also annotates a failing spec on the run
