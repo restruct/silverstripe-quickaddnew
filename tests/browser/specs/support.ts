@@ -118,7 +118,9 @@ export async function closeButtonGeometry(dialog: Locator) {
         const isVisible = (el: Element) => {
             const r = el.getBoundingClientRect();
             const cs = getComputedStyle(el);
-            return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+            // width OR height: an inline icon span can have a zero-height box and still paint its
+            // ::before glyph (measured: the second X of the SS5 double-X regression is exactly that).
+            return (r.width > 0 || r.height > 0) && cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
         };
         const glyphs: string[] = [];
         for (const el of [btn, ...Array.from(btn.querySelectorAll('*'))]) {
@@ -138,13 +140,56 @@ export async function closeButtonGeometry(dialog: Locator) {
             const r = el.getBoundingClientRect();
             return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
         };
-        const icon = btn.querySelector('.font-icon-cancel, .ui-icon') ?? btn;
         return {
             glyphs,
             button: box(btn),
-            icon: box(icon),
             dialog: box(btn.closest('.ui-dialog')!),
             titlebar: box(btn.closest('.ui-dialog-titlebar')!),
         };
     });
+}
+
+/**
+ * Where the close X is actually PAINTED inside its button, from a screenshot of the button: the
+ * bounding box of every pixel that differs from the button's corner (background) colour, and how
+ * far its centre sits from the button's centre. Element boxes cannot answer "is the X centred":
+ * an icon-font glyph is a pseudo-element, and its span's box can be offset while the glyph looks
+ * fine, or the other way round.
+ */
+export async function paintedOffset(page: Page, target: Locator) {
+    const png = (await target.screenshot({ animations: 'disabled' })).toString('base64');
+    return page.evaluate(async (b64) => {
+        const img = new Image();
+        img.src = `data:image/png;base64,${b64}`;
+        await img.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        const { data, width, height } = ctx.getImageData(0, 0, img.width, img.height);
+        const bg = [data[0], data[1], data[2]];
+        let minX = width, minY = height, maxX = -1, maxY = -1;
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const i = (y * width + x) * 4;
+                // A clear difference from the background on any channel counts as ink.
+                const diff = Math.max(Math.abs(data[i] - bg[0]), Math.abs(data[i + 1] - bg[1]), Math.abs(data[i + 2] - bg[2]));
+                if (diff > 40) {
+                    minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+                    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+                }
+            }
+        }
+        if (maxX < 0) return { ink: false, dx: NaN, dy: NaN, inkWidth: 0, inkHeight: 0, width, height };
+        return {
+            ink: true,
+            inkWidth: maxX - minX + 1,
+            inkHeight: maxY - minY + 1,
+            dx: (minX + maxX + 1) / 2 - width / 2,
+            dy: (minY + maxY + 1) / 2 - height / 2,
+            width,
+            height,
+        };
+    }, png);
 }
