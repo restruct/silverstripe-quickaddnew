@@ -1,5 +1,7 @@
 # Browser-test targets for this module, sourced by the shared runner
-# (~/Sites/0_ss-mods-maintenance/tools/browser/run.sh). Plain bash assignments only.
+# (~/Sites/0_ss-mods-maintenance/tools/browser/run.sh) and by .github/workflows/browser-tests.yml.
+# Plain bash assignments only. CI tests only the targets with an empty SS<n>_SRC_REF (= this
+# checkout); SS5 is tested by the v2 branch's own copy of the workflow.
 
 BROWSER_PACKAGE="restruct/silverstripe-quickaddnew"
 BROWSER_TARGETS="ss5 ss6"
