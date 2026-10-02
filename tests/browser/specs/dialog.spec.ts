@@ -6,6 +6,7 @@ import {
     closeButtonGeometry,
     openDialog,
     openNewOwner,
+    paintedOffset,
     showDialog,
 } from './support';
 
@@ -49,9 +50,15 @@ test.describe('Add New dialog', () => {
         // One glyph: the admin's own <span class="font-icon-cancel"> (double X regression, #1).
         expect(g.glyphs, `glyphs drawn in the close button: ${g.glyphs.join(', ')}`).toHaveLength(1);
 
-        // Centred: the icon's box centre sits on the button's centre.
-        expect(Math.abs(g.icon.cx - g.button.cx)).toBeLessThanOrEqual(2);
-        expect(Math.abs(g.icon.cy - g.button.cy)).toBeLessThanOrEqual(2);
+        // Centred: the painted X (measured from a screenshot of the button) sits on its centre.
+        const ink = await paintedOffset(page, dialog.locator('.ui-dialog-titlebar-close'));
+        expect(ink.ink, 'the close button paints something').toBe(true);
+        // ...and the ink is a glyph, not the button's own border or fill (which would make the
+        // centring check below pass by definition).
+        expect(ink.inkWidth).toBeLessThan(ink.width - 4);
+        expect(ink.inkHeight).toBeLessThan(ink.height - 4);
+        expect(Math.abs(ink.dx), `X is ${ink.dx}px off-centre horizontally`).toBeLessThanOrEqual(2);
+        expect(Math.abs(ink.dy), `X is ${ink.dy}px off-centre vertically`).toBeLessThanOrEqual(2);
 
         // Inside the dialog and the titlebar (the pre-3.1 CSS put it at right: -12px, outside).
         expect(g.button.left).toBeGreaterThanOrEqual(g.dialog.left);
