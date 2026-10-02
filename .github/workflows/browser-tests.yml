@@ -30,7 +30,7 @@ jobs:
       matrix: ${{ steps.read.outputs.matrix }}
       any: ${{ steps.read.outputs.any }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # targets.sh is all this job needs.
           sparse-checkout: tests/browser/targets.sh
@@ -100,7 +100,7 @@ jobs:
 
     steps:
       - name: Check out the module
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: module
 
@@ -113,7 +113,7 @@ jobs:
           coverage: none
 
       - name: Cache Composer downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/composer/files
           key: composer-${{ matrix.target }}-php${{ matrix.php }}-${{ hashFiles('module/composer.json') }}
@@ -198,7 +198,7 @@ jobs:
           exit 1
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -212,7 +212,7 @@ jobs:
 
       - name: Cache Chromium
         id: pw-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PW_VERSION }}-chromium
@@ -235,7 +235,7 @@ jobs:
 
       - name: Upload failure evidence
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-${{ matrix.target }}-results
           path: |
