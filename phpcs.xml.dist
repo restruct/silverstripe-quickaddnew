@@ -5,6 +5,10 @@
     <file>src</file>
     <file>tests</file>
 
+    <!-- The Playwright harness's npm install lands in tests/browser/node_modules; phpcs also sniffs
+         .js by default and runs out of memory tokenising it (measured 2026-10-02). -->
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
     <!-- base rules are PSR-2 -->
     <rule ref="PSR2" >
         <!-- Current exclusions -->

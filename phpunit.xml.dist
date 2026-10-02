@@ -10,6 +10,8 @@
   <testsuites>
     <testsuite name="Default">
       <directory>tests</directory>
+      <!-- Playwright browser tests and their fixtures: not PHPUnit, run by tools/browser/run.sh -->
+      <exclude>tests/browser</exclude>
     </testsuite>
   </testsuites>
 </phpunit>
