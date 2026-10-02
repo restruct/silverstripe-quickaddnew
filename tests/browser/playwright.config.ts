@@ -7,6 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
 //   ~/Sites/0_ss-mods-maintenance/tools/browser/run.sh silverstripe-quickaddnew
 //
 // The runner passes the hosts as BROWSER_TARGET_URLS="ss5=http://127.0.0.1:8855,ss6=...".
+// CI does the same with one target per job (.github/workflows/browser-tests.yml).
 // Every target becomes one Playwright project, plus a "<target>-login" setup project that logs in
 // through the real login form once and saves the session for that target's specs.
 
@@ -38,7 +39,13 @@ export default defineConfig({
     workers: 2,
     timeout: 30_000,
     expect: { timeout: 7_500 },
-    reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+    // On GitHub Actions (CI=true) the 'github' reporter also annotates a failing spec on the run
+    // summary; locally the output is unchanged.
+    reporter: [
+        ['list'],
+        ...(process.env.CI ? [['github'] as ['github']] : []),
+        ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    ],
     use: {
         ...devices['Desktop Chrome'],
         // Failure evidence: a screenshot and a trace (open with `npx playwright show-trace`).
