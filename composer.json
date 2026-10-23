@@ -11,6 +11,12 @@
         {
             "name": "LeKoala",
             "email": "thomas@lekoala.be"
+        },
+        {
+            "name": "Restruct",
+            "email": "dev@restruct.nl",
+            "homepage": "https://restruct.nl",
+            "role": "Maintainer"
         }
     ],
     "require": {
