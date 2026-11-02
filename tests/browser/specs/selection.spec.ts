@@ -52,7 +52,9 @@ test.describe('Dropdown selection after Add New (issue #5)', () => {
         await expect(field).toHaveValue(newValue!);
 
         // Save the record and reload its edit form: the stored has_one must be the new record.
-        await page.getByRole('button', { name: /^(Create|Save)$/ }).first().click();
+        // By the action name, not the label: SS5 prefixes the label with an icon-font glyph, so
+        // the accessible name is " Create" there and "Create" on SS6.
+        await page.locator('button[name="action_doSave"]').click();
         await page.waitForURL(/\/item\/\d+(\/|$|\?)/);
         await page.goto(page.url());
         await expect(select(page, FIELD.sortedTag).locator('option:checked')).toHaveText(title);
