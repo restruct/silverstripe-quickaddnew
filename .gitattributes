@@ -11,3 +11,4 @@
 /phpcs.xml.dist   export-ignore
 /phpunit.xml.dist export-ignore
 /UPGRADING.md     export-ignore
+/docs             export-ignore
