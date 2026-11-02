@@ -132,7 +132,15 @@ jQuery.entwine("quickaddnew", function ($) {
                         // Replace <select> <option>'s rather than the entire HTML block
                         // to avoid JS hooks being lost on the frontend.
                         if ($newInput[0] && $newInput[0].tagName === "SELECT") {
-                            self.html($newInput.children());
+                            // self.html($newInput.children());
+                            // Insert the options as MARKUP, not the parsed response's live
+                            // <option> elements (issue #5). Moving those out of the detached
+                            // single <select> one by one made the browser re-select its first
+                            // remaining option each time the selected one left, so the new
+                            // record AND the last option both ended up selected, and the field
+                            // kept the last one. Parsing the markup inside the field's own
+                            // <select> applies each option's selected attribute there instead.
+                            self.html($newInput.html());
 
                             // Support legacy and new chosen
                             self.trigger("liszt:updated").trigger("chosen:updated");
