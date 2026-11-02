@@ -3,7 +3,7 @@ import { test as base, expect, type Locator, type Page, type Request } from '@pl
 // Shared fixtures and helpers for the quickaddnew specs.
 //
 // The CMS screen is the fixture ModelAdmin in tests/browser/fixtures/ (copied into the scratch
-// host by the runner): a new "Browser Owner" record with three quickaddnew fields.
+// host by the runner): a new "Browser Owner" record with four quickaddnew fields.
 
 /** The edit form of a new Browser Owner record (a full page load, not a pjax navigation). */
 export const NEW_OWNER_URL = '/admin/qan-browser/owners/EditForm/field/owners/item/new';
@@ -13,6 +13,7 @@ export const FIELD = {
     tag: 'TagID', // DropdownField, default dialog title
     workArea: 'OtherTagID', // DropdownField, title overridden with setAddNewDialogTitle()
     tags: 'Tags', // ListboxField (many_many)
+    sortedTag: 'SortedTagID', // DropdownField, source sorted by Title (issue #5)
 } as const;
 
 /**

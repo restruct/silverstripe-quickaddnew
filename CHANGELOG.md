@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.1.1 (2026-11-02)
+
+One bug fix, so a patch release. The same fix is on the `v2` line (Silverstripe 4/5) as 2.2.1.
+
+### Fixed
+
+- **A dropdown came back with the LAST option selected after Add New**, not the new record
+  ([#5](https://github.com/restruct/silverstripe-quickaddnew/issues/5)), so saving the form stored
+  the wrong `has_one` without any warning. It only showed when the new record did not sort last in
+  the source. The submit handler moved the response's live `<option>` elements into the field, and
+  the browser re-selected an option each time the selected one left the detached `<select>`; the
+  options are now inserted as markup, so each option's `selected` attribute applies in the field
+  itself. Listboxes keep all their selections; checkbox sets were not affected (they replace the
+  whole field).
+
+### Tests
+
+- Browser spec `tests/browser/specs/selection.spec.ts` on a dropdown whose source is sorted by
+  Title: it adds a record that does not sort last and checks it is selected and that saving stores
+  it. It failed on the unfixed code (the last option was selected) before the fix went in.
+
 ## 3.1.0 (2026-09-28)
 
 Add New UX fixes from issue #1. One new API, so a minor release. The same changes are on the
