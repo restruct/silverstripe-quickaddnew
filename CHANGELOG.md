@@ -72,7 +72,7 @@ earlier are unaffected.
   Fixed by dropping the shared abstract base; each fixture now extends `DataObject` directly and
   repeats `canCreate()`. The duplication is deliberate and commented as such.
 
-  Reported by the FUSE project after updating. Note that this module's own suite could not have
+  Reported by a project after updating. Note that this module's own suite could not have
   caught it: running a module's tests directly loads the fixtures through PHPUnit rather than
   registering them in the class manifest, so no tables are built and the abstract class is never
   instantiated. Verified instead by reproducing the consumer shape - a `$usesDatabase = true` test
