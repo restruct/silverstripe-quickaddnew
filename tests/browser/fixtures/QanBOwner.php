@@ -7,16 +7,19 @@ use SilverStripe\Forms\ListboxField;
 use SilverStripe\ORM\DataObject;
 
 /**
- * BROWSER-TEST FIXTURE ONLY - a record whose CMS form carries the three quickaddnew field shapes
+ * BROWSER-TEST FIXTURE ONLY - a record whose CMS form carries the four quickaddnew fields
  * the specs drive (see QanBTag for why this never loads in a real install):
  *
  * - TagID      DropdownField, default dialog title ("Add new Browser Tag")
  * - OtherTagID DropdownField, overridden dialog title ("Add a work area")
  * - Tags       ListboxField (many_many), which must keep earlier selections after an add
+ * - SortedTagID DropdownField whose source is sorted by Title, so a new record need not be the
+ *              last option (issue #5: the field came back with the LAST option selected)
  *
  * @property string $Title
  * @method QanBTag Tag()
  * @method QanBTag OtherTag()
+ * @method QanBTag SortedTag()
  * @method \SilverStripe\ORM\ManyManyList Tags()
  */
 class QanBOwner extends DataObject
@@ -32,6 +35,7 @@ class QanBOwner extends DataObject
     private static $has_one = [
         'Tag' => QanBTag::class,
         'OtherTag' => QanBTag::class,
+        'SortedTag' => QanBTag::class,
     ];
 
     private static $many_many = [
@@ -41,11 +45,16 @@ class QanBOwner extends DataObject
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
-        $fields->removeByName(['TagID', 'OtherTagID', 'Tags']);
+        $fields->removeByName(['TagID', 'OtherTagID', 'Tags', 'SortedTagID']);
 
         # The source callback: called again by doAddNew() so the refreshed field lists the new tag.
         $source = function () {
             return QanBTag::get()->map()->toArray();
+        };
+        # Sorted by Title instead of ID: with an ID-ordered source the new record is always the
+        # last option, which hid issue #5 (the last option ended up selected, not the new one).
+        $sortedSource = function () {
+            return QanBTag::get()->sort('Title')->map()->toArray();
         };
 
         $fields->addFieldsToTab('Root.Main', [
@@ -58,6 +67,9 @@ class QanBOwner extends DataObject
                 ->useAddNew(QanBTag::class, $source),
             ListboxField::create('Tags', 'Tags', $source())
                 ->useAddNew(QanBTag::class, $source),
+            DropdownField::create('SortedTagID', 'Sorted tag', $sortedSource())
+                ->setEmptyString('(none)')
+                ->useAddNew(QanBTag::class, $sortedSource),
         ]);
 
         return $fields;
