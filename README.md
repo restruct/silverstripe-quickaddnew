@@ -47,11 +47,9 @@ record selected. Here a third speaker was added to a listbox that already had tw
 The field still has to be saved with the rest of the form: the dialog writes the new record, the
 form's own Save stores the relation.
 
-> Known issue ([#5](https://github.com/restruct/silverstripe-quickaddnew/issues/5)): on a
-> **dropdown**, the field comes back with the *last* option selected rather than the new record,
-> unless the new record sorts last in the source. Listboxes and checkbox sets are not affected.
-> Until it is fixed, order a dropdown's source so new records come last (for example
-> `->sort('ID')`), or check the selection before saving.
+> Fixed in 3.1.1 (2.2.1 on the `v2` line): before that, a **dropdown** came back with the *last*
+> option selected rather than the new record, unless the new record sorted last in the source
+> ([#5](https://github.com/restruct/silverstripe-quickaddnew/issues/5)).
 
 ### Enabling it on a field
 
